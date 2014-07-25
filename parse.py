@@ -2,6 +2,7 @@ import csv
 import sys
 import numpy
 import operator
+from datetime import datetime, date, time
 
 def readCsvFile(filename):
     li = []
@@ -28,6 +29,20 @@ def writeCsvFile(filename, items, fields):
             f.close()
     except IOError:
         pass
+        
+def insert(list, index, newItems):
+    for i in range(len(newItems)):
+        list.insert(index+1, newItems[i])
+        
+def calcDateInfo(quotes):
+    newFields = ["Year", "Month", "Week", "DayOfWeek"]
+    for row in quotes:
+        d = datetime.strptime(row["Date"], "%Y-%m-%d")
+        row["Year"] = "%d" % d.year
+        row["Month"] = "%d" % d.month
+        row["Week"] = "%d" % d.isocalendar()[1]     # ISO Week
+        row["DayOfWeek"] = "%d" % d.isoweekday()    # ISO Week Day where Monday = 1
+    return newFields
     
 def calcRange(quotes):
     newKey = "Range"
@@ -37,6 +52,17 @@ def calcRange(quotes):
         range = high - low;
         row[newKey] = "%.2f" % range
     return newKey
+    
+def calcChange(quotes):
+    newFields = ["DailyChange", "DailyRangeRatio"]
+    for row in quotes:
+        open = float(row["Open"])
+        close = float(row["Close"])
+        change = close - open
+        ratio = change / open
+        row["DailyChange"] = "%.2f" % change
+        row["DailyRangeRatio"] = "%.4f" % ratio
+    return newFields
         
 def extractFieldFromListOfDictionariesIntoList(items, fieldName):
     data = []
@@ -155,19 +181,24 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
             else:
                 quotes[i][keyBestStrategy] = "Hold"
     return newFields
-                    
+
+print "parsing file..."    
 quotes = readCsvFile(sys.argv[1])
 fields = ["Date", "Adj Close", "Open", "High", "Low", "Close", "Volume"]
 movingAgerage = [5, 10, 15, 50, 200]
 daysDelayed = range(1, 21)  #1 to 20 day delay
 tradeWindow = [5, 10, 15, 20]
+
+print "running calculations..."
+insert(fields, 1, calcDateInfo(quotes))
+#fields.extend(calcDateInfo(quotes))
 fields.append(calcRange(quotes))
-fields.extend(calculateMovingAveragesOfFields(quotes, fields[2:], movingAgerage))
-fields.extend(calculateDaysDelayedStream(quotes, fields[2:], daysDelayed))
+fields.extend(calcChange(quotes))
+fields.extend(calculateMovingAveragesOfFields(quotes, fields[6:], movingAgerage))
+fields.extend(calculateDaysDelayedStream(quotes, fields[6:], daysDelayed))
 
-if len(sys.argv) > 2 and sys.argv[2] == "trade":
+if len(sys.argv) > 3 and sys.argv[3] == "trade":
     fields.extend(calculateBestTradeInWindow(quotes, tradeWindow))
-    print fields
 
-print "write file..."
-writeCsvFile('test.csv', quotes, fields)
+print "writing file..."
+writeCsvFile(sys.argv[2], quotes, fields)
