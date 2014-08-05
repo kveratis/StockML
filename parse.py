@@ -22,7 +22,7 @@ def writeCsvFile(filename, items, fields):
     try:
         f = open(filename, 'wb')
         try:
-            writer = csv.DictWriter(f, fields)
+            writer = csv.DictWriter(f, fields, extrasaction='ignore')
             writer.writeheader()
             writer.writerows(items)
         finally:
@@ -181,6 +181,52 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
             else:
                 quotes[i][keyBestStrategy] = "Hold"
     return newFields
+    
+def extract_new_feature_name(feature, targetValue=None, newFeatureName=None):
+    if newFeatureName != None:
+        return newFeatureName
+    elif targetValue != None:
+        return "%s=%s" % (feature, targetValue)
+    else:
+        return feature
+        
+def extract_feature(data, feature, extractFunction, targetValue=None, newFeatureName=None):
+    key = extract_new_feature_name(feature, targetValue, newFeatureName)
+            
+    for row in data:
+        val = row[feature]
+        newVal = extractFunction(val, targetValue)
+        row[key] = newVal
+    
+    return key
+    
+def extract_category_indicator(curentValue, targetValue):
+    if curentValue == targetValue:
+        return "1"
+    else:
+        return "0"
+    
+def extract_feature_matrix(data, features, defaultValue=0):
+    n_rows = len(data)
+    n_cols = len(features)
+    matrix = numpy.zeros((n_rows, n_cols), dtype=numpy.float)
+    
+    i = 0
+    for row in data:
+        j = 0
+        for feature in features:
+            matrix[i][j] = float(row[feature]) if len(row[feature]) > 0 else defaultValue
+            j+=1
+        i+=1
+    return matrix
+        
+def extract_target_matrix(data, target, defaultValue=0):
+    matrix = numpy.zeros((len(data),), dtype=numpy.float)
+    i = 0
+    for row in data:
+        matrix[i] = float(row[target]) if len(row[target]) > 0 else defaultValue
+        i+=1
+    return matrix
 
 print "parsing file..."    
 quotes = readCsvFile(sys.argv[1])
