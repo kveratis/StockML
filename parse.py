@@ -3,7 +3,7 @@ import sys
 import numpy
 import operator
 from datetime import datetime, date, time
-
+        
 def readCsvFile(filename):
     li = []
     try:
@@ -181,70 +181,37 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
             else:
                 quotes[i][keyBestStrategy] = "Hold"
     return newFields
-    
-def extract_new_feature_name(feature, targetValue=None, newFeatureName=None):
-    if newFeatureName != None:
-        return newFeatureName
-    elif targetValue != None:
-        return "%s=%s" % (feature, targetValue)
-    else:
-        return feature
-        
-def extract_feature(data, feature, extractFunction, targetValue=None, newFeatureName=None):
-    key = extract_new_feature_name(feature, targetValue, newFeatureName)
+
+def calculateNewFields(quotes, fields, calcTradeWindow=False):
+    insert(fields, 1, calcDateInfo(quotes))
+    #fields.extend(calcDateInfo(quotes))
+    fields.append(calcRange(quotes))
+    fields.extend(calcChange(quotes))
+    fields.extend(calculateMovingAveragesOfFields(quotes, fields[6:], movingAgerage))
+    fields.extend(calculateDaysDelayedStream(quotes, fields[6:], daysDelayed))
+
+    if calcTradeWindow == True:
+        fields.extend(calculateBestTradeInWindow(quotes, tradeWindow))
             
-    for row in data:
-        val = row[feature]
-        newVal = extractFunction(val, targetValue)
-        row[key] = newVal
+if __name__ == '__main__':
+    """
+    call like python parse.py BAC trade or python parse.py VIX
+    """
+    ticker = sys.argv[1]
+    trade = (len(sys.argv) > 2 and sys.argv[2] == "trade")
+    source_file = "%s.csv" % ticker
+    data_file = "%s_data.csv" % ticker
+    fields = ["Date", "Adj Close", "Open", "High", "Low", "Close", "Volume"]
+    movingAgerage = [5, 10, 15, 50, 200]
+    daysDelayed = range(1, 21)  #1 to 20 day delay
+    tradeWindow = [5, 10, 15, 20]
     
-    return key
+    print "parsing file..." 
+    quotes = readCsvFile(source_file)
     
-def extract_category_indicator(curentValue, targetValue):
-    if curentValue == targetValue:
-        return "1"
-    else:
-        return "0"
+    print "running calculations..."
+    calculateNewFields(quotes, fields, trade)
     
-def extract_feature_matrix(data, features, defaultValue=0):
-    n_rows = len(data)
-    n_cols = len(features)
-    matrix = numpy.zeros((n_rows, n_cols), dtype=numpy.float)
+    print "writing data file..."
+    writeCsvFile(data_file, quotes, fields)
     
-    i = 0
-    for row in data:
-        j = 0
-        for feature in features:
-            matrix[i][j] = float(row[feature]) if len(row[feature]) > 0 else defaultValue
-            j+=1
-        i+=1
-    return matrix
-        
-def extract_target_matrix(data, target, defaultValue=0):
-    matrix = numpy.zeros((len(data),), dtype=numpy.float)
-    i = 0
-    for row in data:
-        matrix[i] = float(row[target]) if len(row[target]) > 0 else defaultValue
-        i+=1
-    return matrix
-
-print "parsing file..."    
-quotes = readCsvFile(sys.argv[1])
-fields = ["Date", "Adj Close", "Open", "High", "Low", "Close", "Volume"]
-movingAgerage = [5, 10, 15, 50, 200]
-daysDelayed = range(1, 21)  #1 to 20 day delay
-tradeWindow = [5, 10, 15, 20]
-
-print "running calculations..."
-insert(fields, 1, calcDateInfo(quotes))
-#fields.extend(calcDateInfo(quotes))
-fields.append(calcRange(quotes))
-fields.extend(calcChange(quotes))
-fields.extend(calculateMovingAveragesOfFields(quotes, fields[6:], movingAgerage))
-fields.extend(calculateDaysDelayedStream(quotes, fields[6:], daysDelayed))
-
-if len(sys.argv) > 3 and sys.argv[3] == "trade":
-    fields.extend(calculateBestTradeInWindow(quotes, tradeWindow))
-
-print "writing file..."
-writeCsvFile(sys.argv[2], quotes, fields)
