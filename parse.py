@@ -50,7 +50,7 @@ def calcRange(quotes):
         high = float(row["High"])
         low = float(row["Low"])
         range = high - low;
-        row[newKey] = "%.2f" % range
+        row[newKey] = "%f" % range
     return newKey
     
 def calcChange(quotes):
@@ -60,8 +60,8 @@ def calcChange(quotes):
         close = float(row["Close"])
         change = close - open
         ratio = change / open
-        row["DailyChange"] = "%.2f" % change
-        row["DailyRangeRatio"] = "%.4f" % ratio
+        row["DailyChange"] = "%f" % change
+        row["DailyRangeRatio"] = "%f" % ratio
     return newFields
         
 def extractFieldFromListOfDictionariesIntoList(items, fieldName):
@@ -82,7 +82,7 @@ def calculateDelayedStream(items, delay):
     
 def addFieldToList(items, newData, fieldName):
     for i in range(newData.size):
-        items[i][fieldName] = "%.2f" % newData[i]
+        items[i][fieldName] = "%f" % newData[i]
     if newData.size < len(items): # back fill with zeros
         for j in range(newData.size, len(items)):
             items[i][fieldName] = "0.00"
@@ -214,4 +214,3 @@ if __name__ == '__main__':
     
     print "writing data file..."
     writeCsvFile(data_file, quotes, fields)
-    
