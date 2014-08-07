@@ -1,3 +1,4 @@
+import config
 import csv
 import sys
 import numpy
@@ -183,15 +184,14 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
     return newFields
 
 def calculateNewFields(quotes, fields, calcTradeWindow=False):
-    insert(fields, 1, calcDateInfo(quotes))
-    #fields.extend(calcDateInfo(quotes))
+    insert(fields, 0, calcDateInfo(quotes))
     fields.append(calcRange(quotes))
     fields.extend(calcChange(quotes))
-    fields.extend(calculateMovingAveragesOfFields(quotes, fields[6:], movingAgerage))
-    fields.extend(calculateDaysDelayedStream(quotes, fields[6:], daysDelayed))
+    fields.extend(calculateMovingAveragesOfFields(quotes, fields[5:], config.movingAgerage))
+    fields.extend(calculateDaysDelayedStream(quotes, fields[5:], config.daysDelayed))
 
     if calcTradeWindow == True:
-        fields.extend(calculateBestTradeInWindow(quotes, tradeWindow))
+        fields.extend(calculateBestTradeInWindow(quotes, config.tradeWindow))
             
 if __name__ == '__main__':
     """
@@ -201,16 +201,13 @@ if __name__ == '__main__':
     trade = (len(sys.argv) > 2 and sys.argv[2] == "trade")
     source_file = "%s.csv" % ticker
     data_file = "%s_data.csv" % ticker
-    fields = ["Date", "Adj Close", "Open", "High", "Low", "Close", "Volume"]
-    movingAgerage = [5, 10, 15, 50, 200]
-    daysDelayed = range(1, 21)  #1 to 20 day delay
-    tradeWindow = [5, 10, 15, 20]
     
     print "parsing file..." 
     quotes = readCsvFile(source_file)
     
     print "running calculations..."
-    calculateNewFields(quotes, fields, trade)
+    calculateNewFields(quotes, config.fields, trade)
     
     print "writing data file..."
-    writeCsvFile(data_file, quotes, fields)
+    writeCsvFile(data_file, quotes, config.fields)
+    
