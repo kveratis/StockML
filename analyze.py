@@ -1,3 +1,4 @@
+import config
 import numpy
 import sys
 
@@ -5,18 +6,24 @@ def extractColumns(data, columns):
     return data[:,columns]
     
 if __name__ == '__main__':
+    """
+    Call like python analyze.py IBM training Low > test.txt
+    Call like python analyze.py VIX training Low IBM > test.txt  -- VIX features, IBM targets
+    """
     ticker = sys.argv[1]
     dataset = sys.argv[2]
     target = sys.argv[3]
-    #columns = sys.argv[4].split(',')
+    target_ticker = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != '>' else ticker
     
     feature_file = "%s_%s_features.npy" % (ticker, dataset)
-    target_file = "%s_%s_target_%s.npy" % (ticker, dataset, target)
+    target_file = "%s_%s_target_%s.npy" % (target_ticker, dataset, target)
     
     features = numpy.load(feature_file)
     targets = numpy.load(target_file)
          
-    for i in range(numpy.shape(features)[1]):
+    print "Feature, Coefficient, CoeffMagnitude"
+    
+    for i in range(len(config.features)):
         feature = features[:,i]
         coef = numpy.corrcoef(feature, targets)[0][1]
-        print "%d, %f" % (i, coef)
+        print "%s, %f, %f" % (config.features[i], coef, (coef ** 2) ** 0.5)
