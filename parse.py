@@ -4,6 +4,7 @@ import sys
 import numpy
 import operator
 from datetime import datetime, date, time
+from operator import itemgetter
         
 def readCsvFile(filename):
     li = []
@@ -109,55 +110,15 @@ def calculateDaysDelayedStream(quotes, fieldNames, daysDelayed):
             delayedList = calculateDelayedStream(data, delay)
             addFieldToList(quotes, delayedList, key)
     return newFields
-    
-def findLowestTradeInList(items):
-    lowest = min(items)
-    low_idx = items.index(lowest)
-    return (lowest, low_idx)
-    
-def findHighestTradeInList(items):
-    highest = max(items)
-    high_idx = items.index(highest)
-    return (highest, high_idx)
-    
-def findBestLongTrade(buyList, sellList):
-    buyTrade = findLowestTradeInList(buyList)
-    sellTrade = findHighestTradeInList(sellList)
-    
-    if buyTrade[1] < sellTrade[1]:  # buy low, sell high
-        return (buyTrade[0], sellTrade[0], sellTrade[0] - buyTrade[0])  #buy price, sell price, range
-    elif buyTrade[1] == 0 or sellTrade[1] == len(sellList) - 1:
-        return (0.00, 0.00, 0.00)
-    else:
-        trade1 = findBestLongTrade(buyList[:sellTrade[1]+1], sellList[:sellTrade[1]+1]) # find the second best buy price
-        trade2 = findBestLongTrade(buyList[buyTrade[1]:], sellList[buyTrade[1]:])       # find the second best sell price
-        if trade1[2] > trade2[2]:    # find best range
-            return trade1
-        else:
-            return trade2
-            
-def findBestShortTrade(buyList, sellList):
-    buyTrade = findLowestTradeInList(buyList)
-    sellTrade = findHighestTradeInList(sellList)
-    
-    if sellTrade[1] < buyTrade[1]:  # sell high, buy low
-        return (buyTrade[0], sellTrade[0], sellTrade[0] - buyTrade[0])  #buy price, sell price, range
-    elif sellTrade[1] == 0 or buyTrade[1] == len(buyList) - 1:
-        return (0.00, 0.00, 0.00)
-    else:
-        trade1 = findBestShortTrade(buyList[:buyTrade[1]+1], sellList[:buyTrade[1]+1])    # find the second best sell price
-        trade2 = findBestShortTrade(buyList[sellTrade[1]:], sellList[sellTrade[1]:])      # find the second best buy price
-        if trade1[2] > trade2[2]:    # find best range
-            return trade1
-        else:
-            return trade2
-    
+                  
 def calculateBestTradeInWindow(quotes, tradeWindow):
     newFields = []
     high = extractFieldFromListOfDictionariesIntoList(quotes, "High")[::-1] # extract list in sequential order
     low = extractFieldFromListOfDictionariesIntoList(quotes, "Low")[::-1]
     for windowSize in tradeWindow:
-        index = range(len(high) - windowSize)
+        idx_len = len(high)
+        index = range(idx_len)
+        upperBound = idx_len - 1
         keyBestLongBuyPrice = "%sDayWindowBestLongBuyPrice" % windowSize
         keyBestLongSellPrice = "%sDayWindowBestLongSellPrice" % windowSize
         keyBestLongRange = "%sDayWindowBestLongRange" % windowSize
@@ -167,28 +128,33 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
         keyBestStrategy = "%sDayWindowBestStrategy" % windowSize
         newFields.extend([keyBestLongBuyPrice, keyBestLongSellPrice, keyBestLongRange, keyBestShortBuyPrice, keyBestShortSellPrice, keyBestShortRange, keyBestStrategy])
         for i in index:
-            bestLongTrade = findBestLongTrade(low[i:i + windowSize], high[i:i + windowSize])
-            bestShortTrade = findBestShortTrade(low[i:i + windowSize], high[i:i + windowSize])
-            quotes[i][keyBestLongBuyPrice] = "%.2f" % bestLongTrade[0]
-            quotes[i][keyBestLongSellPrice] = "%.2f" % bestLongTrade[1]
-            quotes[i][keyBestLongRange] = "%.2f" % bestLongTrade[2]
-            quotes[i][keyBestShortBuyPrice] = "%.2f" % bestLongTrade[0]
-            quotes[i][keyBestShortSellPrice] = "%.2f" % bestLongTrade[1]
-            quotes[i][keyBestShortRange] = "%.2f" % bestLongTrade[2]
-            if bestLongTrade[2] > bestShortTrade[2]: # Short or Whichever option has the most profit potential
-                quotes[i][keyBestStrategy] = "Long"
-            elif bestLongTrade[2] < bestShortTrade[2]:
-                quotes[i][keyBestStrategy] = "Short"
-            else:
-                quotes[i][keyBestStrategy] = "Hold"
-    return newFields
+            j = upperBound - i # reverse index
+            upperBoundOfWindow = i + windowSize if (i + windowSize) <= idx_len else idx_len
+            buyList = low[i:upperBoundOfWindow]
+            sellList = high[i:upperBoundOfWindow]
+            allPossibleTrades = [(a, b, buyList[a], sellList[b], sellList[b] - buyList[a]) for a in range(len(buyList)) for b in range(len(sellList)) if a != b]
+            bestLongTrades = sorted([(allPossibleTrades[x][0], allPossibleTrades[x][1], allPossibleTrades[x][2], allPossibleTrades[x][3], allPossibleTrades[x][4]) for x in range(len(allPossibleTrades)) if allPossibleTrades[x][0] < allPossibleTrades[x][1]], key=itemgetter(4), reverse = True)
+            bestShortTrades = sorted([(allPossibleTrades[y][0], allPossibleTrades[y][1], allPossibleTrades[y][2], allPossibleTrades[y][3], -1 * allPossibleTrades[y][4]) for y in range(len(allPossibleTrades)) if allPossibleTrades[y][1] < allPossibleTrades[y][0]], key=itemgetter(4), reverse = True)
+            quotes[j][keyBestLongBuyPrice] = "%f" % bestLongTrades[0][2] if j > 0 else quotes[j]["Low"]
+            quotes[j][keyBestLongSellPrice] = "%f" % bestLongTrades[0][3] if j > 0 else quotes[j]["High"]
+            longRange = bestLongTrades[0][3] if j > 0 else float(quotes[j]["Range"])
+            quotes[j][keyBestLongRange] = "%f" % longRange
+            quotes[j][keyBestShortBuyPrice] = "%f" % bestShortTrades[0][2] if j > 0 else quotes[j]["Low"]
+            quotes[j][keyBestShortSellPrice] = "%f" % bestShortTrades[0][3] if j > 0 else quotes[j]["High"]
+            shortRange = bestShortTrades[0][3] if j > 0 else float(quotes[j]["Range"])
+            quotes[j][keyBestShortRange] = "%f" % shortRange
 
+            if longRange > shortRange: # Short or Whichever option has the most profit potential
+                quotes[j][keyBestStrategy] = "Long"
+            elif longRange < shortRange:
+                quotes[j][keyBestStrategy] = "Short"
+            else:
+                quotes[j][keyBestStrategy] = "Hold"
+    return newFields
+    
 def calculateNewFields(quotes, fields, calcTradeWindow=False):
     insert(fields, 0, calcDateInfo(quotes))
     fields.append(calcRange(quotes))
-    fields.extend(calcChange(quotes))
-    fields.extend(calculateMovingAveragesOfFields(quotes, fields[5:], config.movingAgerage))
-    fields.extend(calculateDaysDelayedStream(quotes, fields[5:], config.daysDelayed))
 
     if calcTradeWindow == True:
         fields.extend(calculateBestTradeInWindow(quotes, config.tradeWindow))
