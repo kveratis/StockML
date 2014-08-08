@@ -1,9 +1,10 @@
-from sklearn.linear_model import LogisticRegression as Model
+from sklearn.cross_validation import cross_val_score
+from sklearn.tree import DecisionTreeRegressor as Model
 from sklearn.externals import joblib
+import config
 import numpy
 import parse
 import sys
-#import pickle
 
 def train(features, target):
     model = Model()
@@ -47,6 +48,13 @@ def score_AtOrAboveWithCutoff(prediction, reality):
         return 1000 + diff
     else:
         return 0
+        
+def RootMeanSquareError(predicted_values, true_values):
+    n = len(predicted_values)
+    residuals = 0
+    for i in range(n):
+        residuals += (true_values[i] - predicted_values[i])**2
+    return numpy.sqrt(residuals/n)
     
 if __name__ == '__main__':
     ticker = sys.argv[1]
@@ -74,6 +82,6 @@ if __name__ == '__main__':
     numpy.save("%s_%s_predictions.npy" % (ticker, target), predictions)
     
     print "Scoring predictions..."
-    scores = validate(predictions, test_targets, score_AtOrAboveWithPenalty)
+    scores = validate(predictions, test_targets, score_AtOrAboveWithCutoff)
     print "Saving scores to file..."
     numpy.save("%s_%s_scores.npy" % (ticker, target), scores)
