@@ -155,6 +155,9 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
 def calculateNewFields(quotes, fields, calcTradeWindow=False):
     insert(fields, 0, calcDateInfo(quotes))
     fields.append(calcRange(quotes))
+    fields.extend(calcChange(quotes))
+    fields.extend(calculateMovingAveragesOfFields(quotes, fields[5:], config.movingAgerage))
+    fields.extend(calculateDaysDelayedStream(quotes, fields[5:], config.daysDelayed))
 
     if calcTradeWindow == True:
         fields.extend(calculateBestTradeInWindow(quotes, config.tradeWindow))
