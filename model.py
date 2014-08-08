@@ -59,10 +59,12 @@ def RootMeanSquareError(predicted_values, true_values):
 if __name__ == '__main__':
     ticker = sys.argv[1]
     target = sys.argv[2]
+    target_ticker = sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] != '>' else ticker
+    
     train_features_file = "%s_training_features.npy" % ticker
-    train_targets_file = "%s_training_target_%s.npy" % (ticker, target)
+    train_targets_file = "%s_training_target_%s.npy" % (target_ticker, target)
     test_features_files = "%s_testing_features.npy" % ticker
-    test_targets_file = "%s_testing_target_%s.npy" % (ticker, target)
+    test_targets_file = "%s_testing_target_%s.npy" % (target_ticker, target)
        
     print "Loading data..."
     train_features = numpy.load(train_features_file)
@@ -75,6 +77,11 @@ if __name__ == '__main__':
     print "Saving model to file..."
     joblib.dump(model, "%s_%s_model.pkl" % (ticker, target))
     # reconstitute via model = joblib.load("%s_%s_model.pkl" % (ticker, target))
+    
+    feature_params = model.feature_importances_
+    print "Feature, Importance"
+    for i in range(len(config.features)):
+        print config.features[i], feature_params[i]
     
     print "Making predictions..."
     predictions = predict(model, test_features)
