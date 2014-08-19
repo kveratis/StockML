@@ -133,15 +133,15 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
             buyList = low[i:upperBoundOfWindow]
             sellList = high[i:upperBoundOfWindow]
             allPossibleTrades = [(a, b, buyList[a], sellList[b], sellList[b] - buyList[a]) for a in range(len(buyList)) for b in range(len(sellList)) if a != b]
-            bestLongTrades = sorted([(allPossibleTrades[x][0], allPossibleTrades[x][1], allPossibleTrades[x][2], allPossibleTrades[x][3], allPossibleTrades[x][4]) for x in range(len(allPossibleTrades)) if allPossibleTrades[x][0] < allPossibleTrades[x][1]], key=itemgetter(4), reverse = True)
-            bestShortTrades = sorted([(allPossibleTrades[y][0], allPossibleTrades[y][1], allPossibleTrades[y][2], allPossibleTrades[y][3], -1 * allPossibleTrades[y][4]) for y in range(len(allPossibleTrades)) if allPossibleTrades[y][1] < allPossibleTrades[y][0]], key=itemgetter(4), reverse = True)
+            bestLongTrades = sorted([(allPossibleTrades[x][0], allPossibleTrades[x][1], allPossibleTrades[x][2], allPossibleTrades[x][3], allPossibleTrades[x][4]) for x in range(len(allPossibleTrades)) if allPossibleTrades[x][2] < allPossibleTrades[x][3]], key=itemgetter(4), reverse = True)
+            bestShortTrades = sorted([(allPossibleTrades[y][0], allPossibleTrades[y][1], allPossibleTrades[y][2], allPossibleTrades[y][3], -1 * allPossibleTrades[y][4]) for y in range(len(allPossibleTrades)) if allPossibleTrades[y][2] < allPossibleTrades[y][3]], key=itemgetter(4), reverse = True)
             quotes[j][keyBestLongBuyPrice] = "%f" % bestLongTrades[0][2] if j > 0 else quotes[j]["Low"]
             quotes[j][keyBestLongSellPrice] = "%f" % bestLongTrades[0][3] if j > 0 else quotes[j]["High"]
-            longRange = bestLongTrades[0][3] if j > 0 else float(quotes[j]["Range"])
+            longRange = bestLongTrades[0][4] if j > 0 else float(quotes[j]["Range"])
             quotes[j][keyBestLongRange] = "%f" % longRange
             quotes[j][keyBestShortBuyPrice] = "%f" % bestShortTrades[0][2] if j > 0 else quotes[j]["Low"]
             quotes[j][keyBestShortSellPrice] = "%f" % bestShortTrades[0][3] if j > 0 else quotes[j]["High"]
-            shortRange = bestShortTrades[0][3] if j > 0 else float(quotes[j]["Range"])
+            shortRange = bestShortTrades[0][4] if j > 0 else float(quotes[j]["Range"])
             quotes[j][keyBestShortRange] = "%f" % shortRange
 
             if longRange > shortRange: # Short or Whichever option has the most profit potential
