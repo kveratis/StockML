@@ -168,8 +168,9 @@ if __name__ == '__main__':
     """
     ticker = sys.argv[1]
     trade = (len(sys.argv) > 2 and sys.argv[2] == "trade")
-    source_file = "%s.csv" % ticker
-    data_file = "%s_data.csv" % ticker
+    
+    source_file = config.GetSourceFileName(ticker)
+    data_file = config.GetDataFileName(ticker)
     
     print "parsing file..." 
     quotes = readCsvFile(source_file)
