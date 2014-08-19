@@ -15,9 +15,18 @@ if __name__ == '__main__':
     target = sys.argv[3]
     target_ticker = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != '>' else ticker
     
-    feature_file = "%s_%s_features.npy" % (ticker, dataset)
-    target_file = "%s_%s_target_%s.npy" % (target_ticker, dataset, target)
+    train_features_file = config.GetTrainingFeaturesFileName(ticker)
+    train_targets_file = config.GetTrainingTargetsFileName(target_ticker, target)
+    test_features_file = config.GetTestingFeaturesFileName(ticker)
+    test_targets_file = config.GetTestingTargetsFileName(target_ticker, target)
     
+    if dataset == "training":
+        feature_file = train_features_file
+        target_file = train_targets_file
+    else:
+        feature_file = test_features_file
+        target_file = test_targets_file
+        
     features = numpy.load(feature_file)
     targets = numpy.load(target_file)
          
