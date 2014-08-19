@@ -70,15 +70,17 @@ def partitionDataByFeatureRange(data, feature, trainingStartRange, testingStartR
     
 if __name__ == '__main__':
     """
-    Call like python preprocess.py BAC
+    Call like python preprocess.py BAC 1993 2014
     """
     ticker = sys.argv[1]
+    trainLowerBoundDate = sys.argv[2]
+    testLowerBoundDate = sys.argv[3]
     data_file = "%s_data.csv" % ticker
     training_set_prefix = "%s_training" % ticker
     testing_set_prefix = "%s_testing" % ticker
     
     data = parse.readCsvFile(data_file)
-    training_set, testing_set = partitionDataByFeatureRange(data, "Year", "1993", "2014")
+    training_set, testing_set = partitionDataByFeatureRange(data, "Year", trainLowerBoundDate, testLowerBoundDate)
     
     training_feats = extract_feature_matrix(training_set, config.features)
     numpy.save("%s_features.npy" % training_set_prefix, training_feats)
