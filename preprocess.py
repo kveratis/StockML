@@ -75,19 +75,22 @@ if __name__ == '__main__':
     ticker = sys.argv[1]
     trainLowerBoundDate = sys.argv[2]
     testLowerBoundDate = sys.argv[3]
-    data_file = "%s_data.csv" % ticker
-    training_set_prefix = "%s_training" % ticker
-    testing_set_prefix = "%s_testing" % ticker
+    
+    data_file = config.GetDataFileName(ticker)
+    train_features_file = config.GetTrainingFeaturesFileName(ticker)
+    train_targets_file = config.GetTrainingTargetsFileName(target_ticker, target)
+    test_features_files = config.GetTestingFeaturesFileName(ticker)
+    test_targets_file = config.GetTestingTargetsFileName(target_ticker, target)
     
     data = parse.readCsvFile(data_file)
     training_set, testing_set = partitionDataByFeatureRange(data, "Year", trainLowerBoundDate, testLowerBoundDate)
     
     training_feats = extract_feature_matrix(training_set, config.features)
-    numpy.save("%s_features.npy" % training_set_prefix, training_feats)
+    numpy.save(train_features_file, training_feats)
     
-    extract_all_targets_into_file(training_set, config.regression_targets, "%s_target_%s.npy", training_set_prefix)
+    extract_all_targets_into_file(training_set, config.regression_targets, train_targets_file)
     
     testing_feats = extract_feature_matrix(testing_set, config.features)
-    numpy.save("%s_features.npy" % testing_set_prefix, testing_feats)
+    numpy.save(test_features_files, testing_feats)
     
-    extract_all_targets_into_file(testing_set, config.regression_targets, "%s_target_%s.npy", testing_set_prefix)
+    extract_all_targets_into_file(testing_set, config.regression_targets, test_targets_file)
