@@ -1,4 +1,6 @@
 import numpy as np
+import sys
+import config
 import matplotlib.pyplot as plt
 
 def basicPlot():
