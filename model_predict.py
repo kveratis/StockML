@@ -3,6 +3,7 @@ from sklearn.tree import DecisionTreeRegressor as Model
 from sklearn.externals import joblib
 import numpy
 import sys
+import config
 
 def predict(model, new_features):
     preds = model.predict(new_features)
