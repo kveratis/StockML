@@ -10,6 +10,7 @@ Research using machine learning to pick stocks
 * BAC - Bank of America
 * AGNC - REIT
 * GSPC - S&P 500
+* VTI - Vanguard Total Stock Market Index
 
 ## Instructions
 
@@ -19,5 +20,6 @@ Research using machine learning to pick stocks
 
 ## Notes
 * TradeCost = 6.95 / trade (+ $0.75/option contract in the case of options) Per ShareBuilder
-* Minimum investment to realize gain = TradeCost + Range/(TradeCost*2) * BuyPrice
-* Profit = Range * NumShares - TradeCost * 2
+* Profit = Range * NumShares - 2 * TradeCost
+* Minimum Number of Shares to Break Event: NumShares = (2 * TradeCost)/Range
+* Minimum investment to realize gain: MinInvestment = (2 * TradeCost)/Range * BuyPrice
