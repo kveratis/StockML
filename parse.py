@@ -3,7 +3,6 @@ import csv
 import sys
 import numpy
 import operator
-from datetime import datetime, date, time
 from operator import itemgetter
         
 def readCsvFile(filename):
@@ -35,17 +34,7 @@ def writeCsvFile(filename, items, fields):
 def insert(list, index, newItems):
     for i in range(len(newItems)):
         list.insert(index+1, newItems[i])
-        
-def calcDateInfo(quotes):
-    newFields = ["Year", "Month", "Week", "DayOfWeek"]
-    for row in quotes:
-        d = datetime.strptime(row["Date"], "%Y-%m-%d")
-        row["Year"] = "%d" % d.year
-        row["Month"] = "%d" % d.month
-        row["Week"] = "%d" % d.isocalendar()[1]     # ISO Week
-        row["DayOfWeek"] = "%d" % d.isoweekday()    # ISO Week Day where Monday = 1
-    return newFields
-    
+           
 def calcRange(quotes):
     newKey = "Range"
     for row in quotes:
@@ -153,15 +142,14 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
     return newFields
     
 def calculateNewFields(quotes, fields, calcTradeWindow=False):
-    insert(fields, 0, calcDateInfo(quotes))
     fields.append(calcRange(quotes))
     fields.extend(calcChange(quotes))
-    fields.extend(calculateMovingAveragesOfFields(quotes, fields[5:], config.movingAgerage))
-    fields.extend(calculateDaysDelayedStream(quotes, fields[5:], config.daysDelayed))
+    fields.extend(calculateMovingAveragesOfFields(quotes, fields[1:], config.movingAgerage))
+    fields.extend(calculateDaysDelayedStream(quotes, fields[1:], config.daysDelayed))
 
     if calcTradeWindow == True:
         fields.extend(calculateBestTradeInWindow(quotes, config.tradeWindow))
-            
+                    
 if __name__ == '__main__':
     """
     call like python parse.py BAC trade or python parse.py VIX
@@ -171,6 +159,7 @@ if __name__ == '__main__':
     
     source_file = config.GetSourceFileName(ticker)
     data_file = config.GetDataFileName(ticker)
+    fields_file = config.GetFieldsFileName(ticker)
     
     print "parsing file..." 
     quotes = readCsvFile(source_file)
@@ -180,4 +169,8 @@ if __name__ == '__main__':
     
     print "writing data file..."
     writeCsvFile(data_file, quotes, config.fields)
+    
+    print "writing fields file..."
+    numpy.save(fields_file, config.fields)
+    
     
