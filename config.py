@@ -1,6 +1,7 @@
 #fields = ["Date", "Adj Close", "Open", "High", "Low", "Close", "Volume"]
 
 fields = ["Date", "High", "Low", "Volume"]
+sqlFields = ["datekey", "ticker", "feature", "feature_text", "feature_value"]
 movingAgerage = [5, 10, 15, 50, 200]
 daysDelayed = range(1, 31)  #1 to 30 day delay
 tradeWindow = [5, 10, 15, 20]
