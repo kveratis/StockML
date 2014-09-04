@@ -1,0 +1,101 @@
+UPDATE Stock..DimTicker SET start_dt = '2008-01-02', earliest_whole_year=2008 WHERE symbol IN ('BND');
+UPDATE Stock..DimTicker SET start_dt = '2002-01-02', earliest_whole_year=2002 WHERE symbol IN ('VTI');
+UPDATE Stock..DimTicker SET start_dt = '1990-01-02', earliest_whole_year=1990 WHERE symbol IN ('GSPC');
+UPDATE Stock..DimTicker SET start_dt = '2009-01-02', earliest_whole_year=2009 WHERE symbol IN ('AGNC');
+UPDATE Stock..DimTicker SET start_dt = '2005-01-03', earliest_whole_year=2005 WHERE symbol IN ('VB');
+UPDATE Stock..DimTicker SET start_dt = '1990-01-02', earliest_whole_year=1990 WHERE symbol IN ('VIX');
+UPDATE Stock..DimTicker SET start_dt = '1993-01-04', earliest_whole_year=1993 WHERE symbol IN ('VTSMX');
+UPDATE Stock..DimTicker SET start_dt = '1990-01-02', earliest_whole_year=1990 WHERE symbol IN ('IBM');
+UPDATE Stock..DimTicker SET start_dt = '1997-01-02', earliest_whole_year=1997 WHERE symbol IN ('VGTSX');
+UPDATE Stock..DimTicker SET start_dt = '2004-01-02', earliest_whole_year=2004 WHERE symbol IN ('VTIVX');
+UPDATE Stock..DimTicker SET start_dt = '2004-01-02', earliest_whole_year=2004 WHERE symbol IN ('ANJIX');
+UPDATE Stock..DimTicker SET start_dt = '1990-01-02', earliest_whole_year=1990 WHERE symbol IN ('BAC');
+
+SELECT symbol, MIN(datekey)
+FROM Stock..FactStockDataPoints f
+	INNER JOIN Stock..DimTicker dt ON f.ticker_id = dt.ticker_id
+	INNER JOIN Stock..DimFeature df ON f.feature_type_id = df.feature_type_id
+GROUP BY symbol
+
+;WITH OldData as
+(
+  SELECT f.id
+  FROM FactStockDataPoints f
+	INNER JOIN DimDate dd ON f.datekey = dd.datekey
+  WHERE ticker_id = 12 AND dd.year < 1993
+)
+DELETE FROM FactStockDataPoints
+WHERE id in (SELECT id FROM OldData)
+
+;WITH TradingDays AS
+(
+	SELECT DISTINCT datekey
+	FROM Stock..FactStockDataPoints
+	WHERE datekey < 20140825
+)
+UPDATE Stock..DimDate
+SET IsTradingDay = 0
+WHERE DateKey NOT IN (SELECT datekey FROM TradingDays)
+
+  SELECT COUNT(*), year, WeekOfYear
+  FROM Stock..DimDate
+  WHERE IsTradingDay = 1
+  GROUP BY year, WeekOfYear
+  
+SELECT COUNT (*), ticker
+FROM stg_raw_data
+WHERE datekey < 19900101
+GROUP BY ticker
+
+SELECT COUNT (*), ticker, MIN(datekey)
+FROM stg_raw_data
+WHERE datekey >= 19900101
+GROUP BY ticker
+
+EXEC stp_extract_stock_data_points
+
+--SELECT TOP 1000 *
+--FROM stg_raw_data
+--WHERE datekey < 19900101
+
+--DELETE
+--FROM stg_raw_data
+--WHERE datekey < 19900101
+
+--;WITH CheckData AS
+--(
+--	SELECT COUNT (*) as cnt, ticker, datekey
+--	FROM stg_raw_data
+--	WHERE datekey >= 19900101
+--	GROUP BY datekey, ticker
+--)
+--SELECT *
+--FROM CheckData
+--WHERE cnt > 1144 OR cnt < 1116
+--ORDER BY datekey, ticker
+
+  
+;WITH StockDataPoints AS
+(
+	SELECT dd.FullDate
+		,dt.symbol as Ticker
+		,df.name as Feature
+		,f.feature_value as Price
+	FROM Stock..FactStockDataPoints f
+		INNER JOIN Stock..DimTicker dt ON f.ticker_id = dt.ticker_id
+		INNER JOIN Stock..DimFeature df ON f.feature_type_id = df.feature_type_id
+		INNER JOIN Stock..DimDate dd ON f.datekey = dd.datekey
+	WHERE dt.symbol = 'VIX'
+)
+SELECT FullDate
+	,[High]
+	,[Low]
+	,[Volume]
+FROM StockDataPoints
+PIVOT (MAX(Price) for Feature IN
+		(
+			[High]
+			,[Low]
+			,[Volume]
+		)) as pivoted_features
+ORDER BY FullDate DESC
