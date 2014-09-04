@@ -133,19 +133,19 @@ def calculateBestTradeInWindow(quotes, tradeWindow):
             shortRange = bestShortTrades[0][4] if j > 0 else float(quotes[j]["Range"])
             quotes[j][keyBestShortRange] = "%f" % shortRange
 
-            if longRange > shortRange: # Short or Whichever option has the most profit potential
-                quotes[j][keyBestStrategy] = "Long"
+            if longRange >= shortRange: # Short or Whichever option has the most profit potential
+                quotes[j][keyBestStrategy] = "1.0" # Long
             elif longRange < shortRange:
-                quotes[j][keyBestStrategy] = "Short"
+                quotes[j][keyBestStrategy] = "-1.0" # Short
             else:
-                quotes[j][keyBestStrategy] = "Hold"
+                quotes[j][keyBestStrategy] = "0" # Hold
     return newFields
     
 def calculateNewFields(quotes, fields, calcTradeWindow=False):
     fields.append(calcRange(quotes))
     fields.extend(calcChange(quotes))
-    fields.extend(calculateMovingAveragesOfFields(quotes, fields[1:], config.movingAgerage))
-    fields.extend(calculateDaysDelayedStream(quotes, fields[1:], config.daysDelayed))
+    fields.extend(calculateMovingAveragesOfFields(quotes, fields[3:], config.movingAgerage))
+    fields.extend(calculateDaysDelayedStream(quotes, fields[3:], config.daysDelayed))
 
     if calcTradeWindow == True:
         fields.extend(calculateBestTradeInWindow(quotes, config.tradeWindow))
