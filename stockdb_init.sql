@@ -241,8 +241,7 @@ CREATE TABLE [dbo].[stg_raw_data](
 	[datekey] [int] NOT NULL,
 	[ticker] [varchar](10) NOT NULL,
 	[feature] [varchar](50) NOT NULL,
-	[feature_text] [varchar](50) NOT NULL,
-	[feature_value] [float] NOT NULL,
+	[feature_value] [decimal](18, 2) NOT NULL,
  CONSTRAINT [PK_stg_raw_data] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
@@ -250,6 +249,22 @@ CREATE TABLE [dbo].[stg_raw_data](
 ) ON [PRIMARY]
 
 GO
+
+CREATE TABLE [dbo].[FactStockDataPoints](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[datekey] [int] NOT NULL,
+	[ticker_id] [int] NOT NULL,
+	[feature_type_id] [int] NOT NULL,
+	[feature_value] [decimal](18, 2) NOT NULL,
+ CONSTRAINT [PK_FactStockDataPoints] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+
 
 SET ANSI_PADDING OFF
 GO
