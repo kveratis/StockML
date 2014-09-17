@@ -81,12 +81,15 @@ if __name__ == '__main__':
     testLowerBoundDate = int(sys.argv[3])
     
     data_file = config.GetDataFileName(ticker)
+    raw_file = config.GetRawDataFileName(ticker)
     train_features_file = config.GetTrainingFeaturesFileName(ticker)
     test_features_files = config.GetTestingFeaturesFileName(ticker)
     
     data = parse.readCsvFile(data_file)
+    numpy.save(raw_file, data)
+    
     training_set, testing_set = partitionDataByFeatureRange(data, "Year", trainLowerBoundDate, testLowerBoundDate)
-        
+    
     training_feats = extract_feature_matrix(training_set, config.features)
     numpy.save(train_features_file, training_feats)
     
