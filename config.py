@@ -17,6 +17,9 @@ def GetSourceFileName(ticker):
 def GetDataFileName(ticker):
     return "%s_data.csv" % ticker
     
+def GetRawDataFileName(ticker):
+    return "%s_raw.npy" % ticker
+    
 def GetFieldsFileName(ticker):
     return "%s_data_features.npy" % ticker
        
