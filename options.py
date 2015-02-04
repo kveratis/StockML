@@ -4,42 +4,53 @@ import config
     
 def roundup(value, precision):
     rval = round(value, precision)
+    tip = 1 / math.pow(10, precision)
     if value > rval:
-        rval = rval + .05
+        rval = rval + tip
     return rval
     
 def calcOptionTradeCost(contracts, costPerTrade = 6.95, costPerContract = 0.75):
     return costPerTrade + (contracts * costPerContract)
     
+def optionPrice(price, contracts = 1):
+    return price * 100 * contracts
+    
 def calcCostPerOptionContract(buyPrice, costPerContract = 0.75):
-    return buyPrice * 100 + costPerContract
+    return optionPrice(buyPrice) + costPerContract
+    
+def contributionMarginPerOptionContract(buyPrice, sellPrice, costPerContract = 0.75):
+    return optionPrice((sellPrice - buyPrice)) - costPerContract
 
 def calcTotalCost(buyPrice, contracts, costPerTrade = 6.95, costPerContract = 0.75):
-    return buyPrice * contracts * 100 + calcOptionTradeCost(contracts, costPerTrade, costPerContract)
+    return optionPrice(buyPrice, contracts) + calcOptionTradeCost(contracts, costPerTrade, costPerContract)
     
 def calcNetRevenue(sellPrice, contracts, costPerTrade = 6.95, costPerContract = 0.75):
-    return sellPrice * contracts * 100 - calcOptionTradeCost(contracts, costPerTrade, costPerContract)
+    return optionPrice(sellPrice, contracts) - calcOptionTradeCost(contracts, costPerTrade, costPerContract)
     
 def calcNetProfitOnOption(buyPrice, sellPrice, contracts, costPerTrade = 6.95, costPerContract = 0.75):
-    tradeCost = calcOptionTradeCost(contracts, costPerTrade, costPerContract)
-    return (sellPrice - buyPrice) * contracts * 100 - (2 * tradeCost)
+    totalTradeCost = 2 * calcOptionTradeCost(contracts, costPerTrade, costPerContract)
+    grossProfit = optionPrice((sellPrice - buyPrice), contracts)
+    return roundup(grossProfit - totalTradeCost, 2)
+    
+def optionContractVolumeToRealizeProfit(buyPrice, sellPrice, profit = 0.0, costPerTrade = 6.95, costPerContract = 0.75):
+    return math.ceil((2 * costPerTrade + profit)/(contributionMarginPerOptionContract(buyPrice, sellPrice, costPerContract) - costPerContract))
     
 def calcMinimumNumberOfContractsToBreakEven(buyPrice, sellPrice, costPerTrade = 6.95, costPerContract = 0.75):
-    return math.ceil((2 * costPerTrade) / (((sellPrice - buyPrice) * 100) - costPerContract))
+    return math.ceil(2 * costPerTrade/(contributionMarginPerOptionContract(buyPrice, sellPrice, costPerContract) - costPerContract))
     
 def calcMinimumContractSellPriceToBreakEven(buyPrice, contracts, costPerTrade = 6.95, costPerContract = 0.75):
-    tradeCost = calcOptionTradeCost(contracts, costPerTrade, costPerContract)
-    return roundup(((2 * tradeCost) + (buyPrice * contracts * 100))/(contracts * 100), 2)
+    totalTradeCost = 2 * calcOptionTradeCost(contracts, costPerTrade, costPerContract)
+    return roundup((totalTradeCost + optionPrice(buyPrice, contracts))/(contracts * 100), 2)
     
 def calcMinimumOptionInvestmentToRealizeGain(buyPrice, sellPrice, costPerTrade = 6.95, costPerContract = 0.75):
     contracts = calcMinimumNumberOfContractsToBreakEven(buyPrice, sellPrice, costPerTrade, costPerContract)
-    return (calcTotalCost(buyPrice, contracts, costPerTrade, costPerContract), contracts)
+    totalCost = calcTotalCost(buyPrice, contracts, costPerTrade, costPerContract)
+    return (totalCost, contracts)
     
 def calcMinimumOptionInvestmentToRealizeProfit(buyPrice, sellPrice, profit, costPerTrade = 6.95, costPerContract = 0.75):
-    contractsForBreakEven = calcMinimumNumberOfContractsToBreakEven(buyPrice, sellPrice, costPerTrade, costPerContract)
-    contractsForProfit = math.ceil(profit / (((sellPrice - buyPrice) * 100) - costPerContract))
-    contracts = math.ceil(contractsForBreakEven + contractsForProfit)
-    return (calcTotalCost(buyPrice, contracts, costPerTrade, costPerContract), contracts)
+    contracts = optionContractVolumeToRealizeProfit(buyPrice, sellPrice, profit, costPerTrade, costPerContract)
+    totalCost = calcTotalCost(buyPrice, contracts, costPerTrade, costPerContract)
+    return (totalCost, contracts)
     
 def calcNumberOfOptionsPurchasable(buyPrice, cash, costPerTrade = 6.95, costPerContract = 0.75):
     itemCost = calcCostPerOptionContract(buyPrice, costPerContract)
